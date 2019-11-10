@@ -17,36 +17,36 @@ void SigintHandler(int sig)
 
 void save_sign(int_least64_t rnd, int_least64_t *s)
 {
-	int i;
-	printf("save\n");
-	FILE *fout = file_open("tmp/log", "a");
+    int i;
+    printf("save\n");
+    FILE *fout = file_open("tmp/log", "a");
     fprintf(fout, "%"PRId64"\n", rnd);
     for(i = 0; i < LENGTH; i++)
         fprintf(fout, "%"PRId64" ", s[i]);
     fprintf(fout, "\n\n");
-	fclose(fout);
+    fclose(fout);
 
 }
 
 int voting_allowed(int name)
 {
-	int tmp, flag_allow = 1;
-	FILE *fin = file_open("tmp/allowed", "r");
+    int tmp, flag_allow = 1;
+    FILE *fin = file_open("tmp/allowed", "r");
     while(fscanf(fin, "%d", &tmp) != EOF)
     {
         if(tmp == name)
         {
-        	flag_allow = 0;
+            flag_allow = 0;
         }
     }
-	fclose(fin);
+    fclose(fin);
     if(flag_allow)
     {
-		FILE *fout = file_open("tmp/allowed", "a");
-    	fprintf(fout, "%d ", name);
-		fclose(fout);
+        FILE *fout = file_open("tmp/allowed", "a");
+        fprintf(fout, "%d ", name);
+        fclose(fout);
     }
-	return flag_allow;
+    return flag_allow;
 }
 
 int main()
@@ -91,35 +91,35 @@ int main()
         child_pid = fork();
         if(child_pid == 0)
         {
-		    send(child_sock, &n, sizeof(n), 0);
-		    send(child_sock, &d, sizeof(d), 0);
+            send(child_sock, &n, sizeof(n), 0);
+            send(child_sock, &d, sizeof(d), 0);
 
             recv(child_sock, &name, sizeof(name), 0);
             recv(child_sock, h, sizeof(h), 0);
             name = voting_allowed(name);
             send(child_sock, &name, sizeof(name), 0);
             if(!name)
-            	exit(-1);
+                exit(-1);
             for(i = 0; i < LENGTH; i++)
-	            s[i] = modpow(h[i], c, n);
+                s[i] = modpow(h[i], c, n);
             send(child_sock, s, sizeof(s), 0);
 
             recv(child_sock, &rnd, sizeof(rnd), 0);
             recv(child_sock, s, sizeof(s), 0);
 
-		    hash_init();
-		    int2hash(&rnd, sizeof(rnd), digest);
-		    hash_finale(digest);
-		    for(i = 0; i < LENGTH; i++)
-		    	if(digest[i] != modpow(s[i], d, n))
-		    	{
-		    		printf("ERROR\n");
-		    		error_flag = 1;
-		    	}
-		    if(!error_flag)
-		   	{
-		   		save_sign(rnd, s);
-		   	}
+            hash_init();
+            int2hash(&rnd, sizeof(rnd), digest);
+            hash_finale(digest);
+            for(i = 0; i < LENGTH; i++)
+                if(digest[i] != modpow(s[i], d, n))
+                {
+                    printf("ERROR\n");
+                    error_flag = 1;
+                }
+            if(!error_flag)
+            {
+                   save_sign(rnd, s);
+            }
             exit(0);
         }
     }
